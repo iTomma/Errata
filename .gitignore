@@ -1,0 +1,40 @@
+# ---- Build output ----
+.gradle/
+build/
+out/
+bin/
+*.class
+
+# Package files. The Gradle wrapper jar is the one jar that MUST be committed,
+# otherwise nobody can build the project without installing Gradle first.
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# ---- Minecraft / ModDevGradle ----
+# runClient and runServer write a whole game directory here: worlds, logs,
+# screenshots, configs. None of it belongs in the repo.
+run/
+runs/
+run-data/
+logs/
+*.log
+*.hprof
+hs_err_pid*
+replay_pid*
+
+# ---- IDEs ----
+.idea/*
+!.idea/codeStyles/
+!.idea/runConfigurations/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+.vscode/
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+desktop.ini
