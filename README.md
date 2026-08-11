@@ -1,8 +1,12 @@
-# Errata
+<p align="center">
+  <img src="icon/errata-gallery-1.png"
+       alt="Errata. Recipes your mods forgot."
+       width="880">
+</p>
 
-*A published list of corrections for your recipe book.*
-
-Minecraft 1.21.1 | NeoForge 21.1.248+ | MIT
+<p align="center">
+  <b>Minecraft 1.21.1</b> &nbsp;|&nbsp; <b>NeoForge 21.1.248+</b> &nbsp;|&nbsp; <b>MIT</b>
+</p>
 
 An errata is the sheet of corrections a publisher issues for a book that shipped with mistakes.
 That is this mod's whole job. Modded recipe books ship with two kinds of mistake, and Errata fixes
