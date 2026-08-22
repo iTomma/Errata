@@ -38,3 +38,9 @@ replay_pid*
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# ---- Version-line worktrees ----
+# Each supported Minecraft line is a branch, checked out as a git worktree in
+# mc-<version>/ so every line is on disk at once and nothing needs switching.
+# The worktrees have their own .git files; they are not content of this branch.
+/mc-*/
