@@ -172,10 +172,25 @@ failures do not need this mod. The asymmetry that justifies Errata only runs one
 
 ---
 
-## Version axis: Stonecutter
+## Version axis: a branch per version line
 
-One repo, one source tree, versions as a build axis, via
-[Stonecutter](https://stonecutter.kikugie.dev/). Version-specific code stays inline:
+**Decision: one branch per Minecraft version line, keeping the current subproject layout on
+each.** Loader subprojects stay as they are; the version axis is git.
+
+```
+main        1.21.x   (shipping)
+mc/1.20.x            when built
+mc/1.21.2            when built
+mc/26.x              when built
+```
+
+### Why not Stonecutter
+
+[Stonecutter](https://stonecutter.kikugie.dev/) is the single-repo alternative, and it was
+the plan until the deltas got measured. Two reasons it does not fit here.
+
+**The version differences are structural, not cosmetic.** Stonecutter earns its keep when
+versions differ by a handful of renames that inline cleanly:
 
 ```java
 //? if >=1.21.2 {
@@ -185,12 +200,45 @@ ResourceLocation id = holder.id();
 //?}
 ```
 
-The inactive branch remains commented, so every version compiles. This composes with the
-existing loader subprojects: Stonecutter owns the version axis, subprojects own the loader
-axis.
+That is a good trade for one or two call sites. But `RecipeHolder` does not *exist* before
+1.20.2 — 16 of the 19 errors on 1.20.1 are that single missing class, threaded through
+`RecipeIndex` and `UnlockHandler`. Expressing "this type is absent and the id lives
+somewhere else entirely" as inline conditionals across two files produces something nobody
+can read. That is a different implementation, and it deserves to look like one.
 
-The matrix multiplies, and not every cell is valid. Track which combinations are real
-rather than generating all of them.
+**Its topology conflicts with the core boundary.** Stonecutter's idiomatic layout is a
+single `src/main/java` with `platform/fabric/` and `platform/neoforge/` packages inside it,
+plus per-loader buildscripts — no loader subprojects. Everything then compiles together per
+loader, so nothing stops `core` importing NeoForge. The compile-time guarantee becomes a
+naming convention. That guarantee is exactly what kept the Fabric port to two files, and it
+is worth more here than single-branch convenience.
+
+Branch-per-version is also the majority practice in the ecosystem — JEI, Jade and
+jaredlll08's MultiLoader-Template all do it.
+
+### What makes branching cheap here
+
+The usual objection to branches is that shared fixes must be ported by hand. Measured, the
+shared surface is large and the divergent surface is small:
+
+- `AdvancementRepair` + `RepairService`: **0 errors** on 1.20.1, 1.20.4, 1.20.6 and 1.21.1.
+  Identical file on every branch; a fix cherry-picks cleanly.
+- `ErrataConfig`, `ErrataCore`, both loader entrypoints: unchanged across the 1.20–1.21
+  range.
+- Divergence is confined to `RecipeIndex` and `UnlockHandler`.
+
+So a bug fix in the repair logic is one cherry-pick per branch with no conflicts. Only
+recipe-indexing changes need per-branch thought — which is the honest cost, since those are
+genuinely different code.
+
+### Conventions
+
+- Branch names: `mc/<line>`, e.g. `mc/1.20.x`.
+- `main` tracks the newest **shipping** line, currently 1.21.x. When 26.x ships and becomes
+  primary, `main` moves and the old line gets its own `mc/1.21.x` branch.
+- Shared fixes land on `main` first, then cherry-pick outward.
+- `ROADMAP.md` lives on every branch, and the compatibility table is the same everywhere —
+  update it on `main` and cherry-pick.
 
 ---
 
