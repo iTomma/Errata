@@ -1,4 +1,4 @@
-package dev.itomma.errata;
+package dev.itomma.errata.core;
 
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -78,8 +78,8 @@ public final class RecipeIndex {
     public static RecipeIndex build(MinecraftServer server) {
         Set<ResourceLocation> alreadyUnlockable = collectAdvancementGrantedRecipes(server);
 
-        boolean manageBookLess = Config.MANAGE_BOOKLESS_RECIPES.get();
-        Set<String> extraTypes = new HashSet<>(Config.EXTRA_DISPLAYABLE_TYPES.get());
+        boolean manageBookLess = ErrataCore.config().manageBookLessRecipes();
+        Set<String> extraTypes = new HashSet<>(ErrataCore.config().extraDisplayableTypes());
 
         List<RecipeHolder<?>> ingredientless = new ArrayList<>();
         // {RecipeHolder, List<Set<Item>>, Boolean announce}
@@ -96,7 +96,7 @@ public final class RecipeIndex {
             total++;
             ResourceLocation id = holder.id();
 
-            if (!Config.namespaceAllowed(id.getNamespace())) {
+            if (!ErrataCore.config().namespaceAllowed(id.getNamespace())) {
                 filtered++;
                 continue;
             }
@@ -108,7 +108,7 @@ public final class RecipeIndex {
                 continue;
             }
 
-            if (Config.ONLY_RECIPES_WITHOUT_ADVANCEMENTS.get() && alreadyUnlockable.contains(id)) {
+            if (ErrataCore.config().onlyRecipesWithoutAdvancements() && alreadyUnlockable.contains(id)) {
                 hadAdvancement++;
                 continue;
             }
@@ -126,7 +126,7 @@ public final class RecipeIndex {
             try {
                 options = ingredientOptions(recipe);
             } catch (Throwable t) {
-                Errata.LOGGER.debug("Could not read ingredients of {}: {}", id, t.toString());
+                ErrataCore.LOGGER.debug("Could not read ingredients of {}: {}", id, t.toString());
                 errored++;
                 continue;
             }
@@ -154,8 +154,8 @@ public final class RecipeIndex {
         }
 
         // ---- pass 3: pick the distinctive ingredient slot for each recipe ----
-        boolean distinctiveMode = Config.DISTINCTIVE_TRIGGERS.get();
-        int threshold = Config.COMMON_ITEM_THRESHOLD.get();
+        boolean distinctiveMode = ErrataCore.config().distinctiveTriggers();
+        int threshold = ErrataCore.config().commonItemThreshold();
 
         Map<Item, List<Managed>> byItem = new IdentityHashMap<>();
         Set<Managed> managedSet = Collections.newSetFromMap(new IdentityHashMap<>());

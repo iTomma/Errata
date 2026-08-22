@@ -1,9 +1,15 @@
 package dev.itomma.errata;
 
+import dev.itomma.errata.core.ErrataConfig;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 import java.util.List;
 
+/**
+ * The NeoForge-backed config. This is loader-specific by nature: {@code ModConfigSpec} does not
+ * exist on Fabric. The core reads settings through {@link ErrataConfig} instead, and {@link #VALUES}
+ * is the adapter that binds the two together.
+ */
 public final class Config {
     public static final ModConfigSpec SPEC;
 
@@ -127,14 +133,31 @@ public final class Config {
         SPEC = b.build();
     }
 
-    private Config() {
+    /**
+     * Live view of this spec as the loader-agnostic {@link ErrataConfig}. Every call reads through
+     * to the spec, so a config reload takes effect without rebinding.
+     */
+    public static final ErrataConfig VALUES = new ErrataConfig() {
+        @Override public boolean onlyRecipesWithoutAdvancements() { return ONLY_RECIPES_WITHOUT_ADVANCEMENTS.get(); }
+        @Override public boolean distinctiveTriggers() { return DISTINCTIVE_TRIGGERS.get(); }
+        @Override public int commonItemThreshold() { return COMMON_ITEM_THRESHOLD.get(); }
+        @Override public boolean requireAllIngredients() { return REQUIRE_ALL_INGREDIENTS.get(); }
+        @Override public boolean manageBookLessRecipes() { return MANAGE_BOOKLESS_RECIPES.get(); }
+        @Override public List<String> extraDisplayableTypes() { return copy(EXTRA_DISPLAYABLE_TYPES.get()); }
+        @Override public boolean grantIngredientlessRecipes() { return GRANT_INGREDIENTLESS_RECIPES.get(); }
+        @Override public int scanIntervalTicks() { return SCAN_INTERVAL_TICKS.get(); }
+        @Override public boolean logSummary() { return LOG_SUMMARY.get(); }
+        @Override public boolean logUnlocks() { return LOG_UNLOCKS.get(); }
+        @Override public boolean repairBrokenAdvancements() { return REPAIR_BROKEN_ADVANCEMENTS.get(); }
+        @Override public List<String> namespaceAllowlist() { return copy(NAMESPACE_ALLOWLIST.get()); }
+        @Override public List<String> namespaceDenylist() { return copy(NAMESPACE_DENYLIST.get()); }
+    };
+
+    /** {@code ConfigValue<List<? extends String>>} does not widen to {@code List<String>}. */
+    private static List<String> copy(List<? extends String> in) {
+        return List.copyOf(in);
     }
 
-    public static boolean namespaceAllowed(String namespace) {
-        List<? extends String> allow = NAMESPACE_ALLOWLIST.get();
-        if (!allow.isEmpty() && !allow.contains(namespace)) {
-            return false;
-        }
-        return !NAMESPACE_DENYLIST.get().contains(namespace);
+    private Config() {
     }
 }

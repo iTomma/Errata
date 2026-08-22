@@ -1,61 +1,80 @@
+// Root build. Holds only what every subproject shares; the real work is in
+// common/, neoforge/ and fabric/.
+//
+// `gradle build` here builds every loader jar in one go:
+//   neoforge/build/libs/errata-1.1.0+mc1.21.1-neoforge.jar
+//   fabric/build/libs/errata-1.1.0+mc1.21.1-fabric.jar
+
 plugins {
     id 'java'
-    id 'net.neoforged.moddev' version '2.0.78'
 }
 
-version = mod_version
-group = mod_group_id
+subprojects {
+    apply plugin: 'java'
 
-base {
-    archivesName = mod_id
-}
+    group = mod_group_id
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-}
+    // Jar name: errata-1.1.0+mc1.21.1-<loader>.jar
+    //
+    // Everything after '+' is SemVer build metadata, ignored when versions are compared,
+    // so this still sorts as plain 1.1.0 while saying which game version and loader the
+    // jar is for. Same convention as Sodium and Fabric API.
+    //
+    // This is the *file* name only. The mod metadata (neoforge.mods.toml / fabric.mod.json)
+    // keeps the bare mod_version, because NeoForge compares mod versions with Maven rules
+    // where '+' is not special and would end up inside the qualifier.
+    version = "${mod_version}+mc${supported_versions}-${project.name}"
 
-neoForge {
-    version = project.neo_version
-
-    runs {
-        client { client() }
-        server { server() }
+    base {
+        archivesName = mod_id
     }
 
-    mods {
-        "${mod_id}" {
-            sourceSet(sourceSets.main)
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+        withSourcesJar()
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.release = 21
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+        testLogging {
+            events 'passed', 'skipped', 'failed'
         }
     }
-}
 
-repositories {
-    mavenCentral()
-}
+    // Token expansion for mod metadata. Kept identical across loaders so the same
+    // placeholders work in neoforge.mods.toml and fabric.mod.json.
+    tasks.withType(ProcessResources).configureEach {
+        var replaceProperties = [
+                minecraft_version      : minecraft_version,
+                minecraft_version_range: minecraft_version_range,
+                neo_version            : neo_version,
+                neo_version_range      : neo_version_range,
+                loader_version_range   : loader_version_range,
+                fabric_loader_version  : fabric_loader_version,
+                fabric_api_version     : fabric_api_version,
+                fabric_minecraft_range : fabric_minecraft_range,
+                mod_id                 : mod_id,
+                mod_name               : mod_name,
+                mod_license            : mod_license,
+                mod_version            : mod_version,
+                mod_authors            : mod_authors,
+                mod_description        : mod_description
+        ]
+        inputs.properties replaceProperties
 
-tasks.withType(ProcessResources).configureEach {
-    var replaceProperties = [
-            minecraft_version      : minecraft_version,
-            minecraft_version_range: minecraft_version_range,
-            neo_version            : neo_version,
-            neo_version_range      : neo_version_range,
-            loader_version_range   : loader_version_range,
-            mod_id                 : mod_id,
-            mod_name               : mod_name,
-            mod_license            : mod_license,
-            mod_version            : mod_version,
-            mod_authors            : mod_authors,
-            mod_description        : mod_description
-    ]
-    inputs.properties replaceProperties
-
-    filesMatching(['META-INF/neoforge.mods.toml']) {
-        expand replaceProperties
+        filesMatching(['META-INF/neoforge.mods.toml', 'fabric.mod.json']) {
+            expand replaceProperties
+        }
     }
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
 }

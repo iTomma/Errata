@@ -9,6 +9,10 @@ displayName = "${mod_name}"
 authors = "${mod_authors}"
 logoFile = "errata_icon.png"
 description = '''${mod_description}'''
+# Errata runs entirely on the logical server: no client classes, no registries, no custom packets.
+# The default MATCH_VERSION would refuse clients that do not have the mod installed, which is
+# exactly the case we want to support, so version checking is skipped on both sides.
+displayTest = "IGNORE_ALL_VERSION"
 
 [[dependencies.${mod_id}]]
 modId = "neoforge"

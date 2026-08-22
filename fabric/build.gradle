@@ -1,0 +1,30 @@
+plugins {
+    // Pinned to the 1.9.x line deliberately: Loom 1.17+ requires Gradle 9, while
+    // ModDevGradle (used by common/ and neoforge/) is a Gradle 8 plugin. 1.9.2 targets
+    // Gradle 8.11+, which is what the wrapper pins. Do not bump this without checking
+    // that ModDevGradle has moved to Gradle 9 too.
+    id 'fabric-loom' version '1.9.2'
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+
+    // Official Mojang mappings, deliberately: the common core is written against
+    // ServerPlayer / RecipeHolder / ServerRecipeBook and compiles unchanged on both
+    // loaders. Switching to Yarn would mean maintaining two copies of the core.
+    mappings loom.officialMojangMappings()
+
+    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+
+    compileOnly project(':common')
+}
+
+// Bundle the common core into the Fabric jar before Loom remaps it.
+tasks.named('jar', Jar) {
+    from project(':common').sourceSets.main.output
+}
+
+tasks.named('sourcesJar', Jar) {
+    from project(':common').sourceSets.main.allSource
+}

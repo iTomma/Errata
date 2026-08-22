@@ -1,4 +1,4 @@
-package dev.itomma.errata;
+package dev.itomma.errata.core;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -43,8 +43,8 @@ import java.util.Map;
 public final class AdvancementRepair {
 
     public static final String PACK_DIR = "errata_repairs";
-    /** Data pack format for 1.21 / 1.21.1. */
-    private static final int PACK_FORMAT = 48;
+    // The pack_format comes from ErrataCore, so porting to a new Minecraft version
+    // changes one number in one place rather than editing this file.
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
@@ -106,7 +106,7 @@ public final class AdvancementRepair {
                     Files.write(out, bytes);
                     changed = true;
                 } catch (IOException e) {
-                    Errata.LOGGER.warn("Could not write repaired advancement {}: {}", id, e.toString());
+                    ErrataCore.LOGGER.warn("Could not write repaired advancement {}: {}", id, e.toString());
                 }
             }
         }
@@ -115,7 +115,7 @@ public final class AdvancementRepair {
             try {
                 writePackMeta(packRoot);
             } catch (IOException e) {
-                Errata.LOGGER.warn("Could not write pack.mcmeta for the repair pack: {}", e.toString());
+                ErrataCore.LOGGER.warn("Could not write pack.mcmeta for the repair pack: {}", e.toString());
             }
         }
 
@@ -126,7 +126,7 @@ public final class AdvancementRepair {
     private static void writePackMeta(Path packRoot) throws IOException {
         Files.createDirectories(packRoot);
         JsonObject pack = new JsonObject();
-        pack.addProperty("pack_format", PACK_FORMAT);
+        pack.addProperty("pack_format", ErrataCore.packFormat());
         pack.addProperty("description",
                 "Errata - repaired recipe advancements (generated, safe to delete)");
         JsonObject root = new JsonObject();
@@ -139,7 +139,8 @@ public final class AdvancementRepair {
         return !grantedRecipes(root).isEmpty();
     }
 
-    private static List<String> grantedRecipes(JsonObject root) {
+    /** Package-private rather than private so {@code AdvancementRepairTest} can reach it. */
+    static List<String> grantedRecipes(JsonObject root) {
         List<String> out = new ArrayList<>();
         JsonElement rewards = root.get("rewards");
         if (rewards != null && rewards.isJsonObject()) {
@@ -155,8 +156,16 @@ public final class AdvancementRepair {
         return out;
     }
 
-    /** @return true if anything was actually rewritten. */
-    private static boolean repairCriteria(JsonObject root) {
+    /**
+     * Rewrite every stale item predicate in this advancement, in place.
+     *
+     * <p>This is the whole repair, and it is pure JSON in / JSON out -- no server, no registries.
+     * Package-private rather than private so {@code AdvancementRepairTest} can exercise it
+     * directly; it is the piece most likely to break silently on a Minecraft version bump.
+     *
+     * @return true if anything was actually rewritten.
+     */
+    static boolean repairCriteria(JsonObject root) {
         JsonElement criteria = root.get("criteria");
         if (criteria == null || !criteria.isJsonObject()) {
             return false;

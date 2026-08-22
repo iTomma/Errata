@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "${mod_id}",
+  "version": "${mod_version}",
+  "name": "${mod_name}",
+  "description": "${mod_description}",
+  "authors": [
+    "${mod_authors}"
+  ],
+  "license": "${mod_license}",
+  "icon": "errata_icon.png",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "dev.itomma.errata.fabric.ErrataFabric"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=${fabric_loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${fabric_minecraft_range}",
+    "java": ">=21"
+  }
+}

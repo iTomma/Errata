@@ -1,0 +1,21 @@
+// The loader-agnostic core.
+//
+// This compiles against *vanilla* Minecraft only -- no NeoForge, no Fabric. ModDevGradle's
+// NeoForm-only mode gives us exactly that. If something in here ever fails to compile because
+// it needs a loader API, that is the build correctly telling you the code belongs in
+// neoforge/ or fabric/ instead.
+
+plugins {
+    id 'net.neoforged.moddev' version '2.0.78'
+}
+
+neoForge {
+    // No `version =`, so no NeoForge -- just deobfuscated vanilla.
+    neoFormVersion = neoform_version
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.11.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}

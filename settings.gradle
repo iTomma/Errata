@@ -2,7 +2,20 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
         maven { url = 'https://maven.neoforged.net/releases' }
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
     }
 }
 
+plugins {
+    // Lets Loom resolve a JDK 21 toolchain automatically if the host JVM differs.
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
 rootProject.name = 'errata'
+
+include 'common'
+include 'neoforge'
+include 'fabric'

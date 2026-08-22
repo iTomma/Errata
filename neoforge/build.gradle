@@ -1,0 +1,34 @@
+plugins {
+    id 'net.neoforged.moddev' version '2.0.78'
+}
+
+neoForge {
+    version = neo_version
+
+    runs {
+        client { client() }
+        server { server() }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+            sourceSet project(':common').sourceSets.main
+        }
+    }
+}
+
+dependencies {
+    // compileOnly, not implementation: the common classes are copied into this jar below
+    // rather than resolved as an external dependency at runtime.
+    compileOnly project(':common')
+}
+
+// Bundle the common core into the NeoForge jar.
+tasks.named('jar', Jar) {
+    from project(':common').sourceSets.main.output
+}
+
+tasks.named('sourcesJar', Jar) {
+    from project(':common').sourceSets.main.allSource
+}

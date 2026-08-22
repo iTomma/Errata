@@ -1,4 +1,4 @@
-package dev.itomma.errata;
+package dev.itomma.errata.core;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;
@@ -55,8 +55,8 @@ public final class UnlockHandler {
             STATES.clear();
         }
 
-        if (Config.LOG_SUMMARY.get()) {
-            Errata.LOGGER.info(
+        if (ErrataCore.config().logSummary()) {
+            ErrataCore.LOGGER.info(
                     "Indexed {} of {} recipes for automatic unlocking "
                             + "({} already covered by an advancement, {} special/filtered, "
                             + "{} unlocked silently because the book cannot show them, {} unreadable, "
@@ -90,12 +90,12 @@ public final class UnlockHandler {
             STATES.put(player.getUUID(), state);
         }
 
-        if (Config.GRANT_INGREDIENTLESS_RECIPES.get() && !current.ingredientless().isEmpty()) {
+        if (ErrataCore.config().grantIngredientlessRecipes() && !current.ingredientless().isEmpty()) {
             if (awardSilently(player, current.ingredientless())) {
                 state.bookDirty = true;
             }
-            if (Config.LOG_UNLOCKS.get()) {
-                Errata.LOGGER.info("{} granted {} ingredient-less recipe(s) silently on join.",
+            if (ErrataCore.config().logUnlocks()) {
+                ErrataCore.LOGGER.info("{} granted {} ingredient-less recipe(s) silently on join.",
                         player.getGameProfile().getName(), current.ingredientless().size());
             }
         }
@@ -151,8 +151,8 @@ public final class UnlockHandler {
             return;
         }
 
-        boolean requireAll = Config.REQUIRE_ALL_INGREDIENTS.get();
-        boolean logUnlocks = Config.LOG_UNLOCKS.get();
+        boolean requireAll = ErrataCore.config().requireAllIngredients();
+        boolean logUnlocks = ErrataCore.config().logUnlocks();
         List<RecipeHolder<?>> announced = null;
         List<RecipeHolder<?>> silent = null;
         List<String> logLines = null;
@@ -209,11 +209,11 @@ public final class UnlockHandler {
             int a = announced == null ? 0 : announced.size();
             int q = silent == null ? 0 : silent.size();
             if (a > 0) {
-                Errata.LOGGER.info("{} unlocked {} recipe(s) [announced, newly obtained]: {}"
+                ErrataCore.LOGGER.info("{} unlocked {} recipe(s) [announced, newly obtained]: {}"
                                 + (q > 0 ? " (+" + q + " added silently)" : ""),
                         player.getGameProfile().getName(), a, String.join(", ", logLines));
             } else {
-                Errata.LOGGER.info("{} silently gained {} recipe(s) [{}].",
+                ErrataCore.LOGGER.info("{} silently gained {} recipe(s) [{}].",
                         player.getGameProfile().getName(), q,
                         initial ? "already in inventory at login" : "not shown in the recipe book");
             }
