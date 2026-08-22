@@ -231,14 +231,48 @@ So a bug fix in the repair logic is one cherry-pick per branch with no conflicts
 recipe-indexing changes need per-branch thought — which is the honest cost, since those are
 genuinely different code.
 
+### Layout: one worktree per line, no switching
+
+`git checkout` between version lines is the wrong workflow here — it churns the working
+tree, invalidates editor and tooling state, and makes comparing two versions impossible.
+Instead every line is checked out **simultaneously** as a
+[git worktree](https://git-scm.com/docs/git-worktree):
+
+```
+Errata/                 core          shared trunk, buildable, tests green
+  mc-1.21.1/            mc/1.21-1.21.1
+  mc-1.21.11/           mc/1.21.2-1.21.11
+  mc-1.20.1/            mc/1.20-1.20.1
+  mc-26.2/              mc/26.1-26.2
+```
+
+One clone, one `.git`, every line on disk at once. Read 1.20.1's `RecipeIndex` next to
+1.21.11's, grep across all lines, build any of them independently. Nothing is ever switched.
+
+```bash
+git worktree add mc-1.21.11 -b mc/1.21.2-1.21.11   # create
+git worktree list                                   # inspect
+git worktree remove mc-1.21.11                      # tear down
+```
+
+The `mc-` prefix earns its keep: `.gitignore` needs one pattern (`/mc-*/`) rather than a
+line per version, and the root listing visually separates worktrees from real project
+directories.
+
 ### Conventions
 
-- Branch names: `mc/<line>`, e.g. `mc/1.20.x`.
-- `main` tracks the newest **shipping** line, currently 1.21.x. When 26.x ships and becomes
-  primary, `main` moves and the old line gets its own `mc/1.21.x` branch.
-- Shared fixes land on `main` first, then cherry-pick outward.
-- `ROADMAP.md` lives on every branch, and the compatibility table is the same everywhere —
-  update it on `main` and cherry-pick.
+- Branch names: `mc/<supported range>`, e.g. `mc/1.21.2-1.21.11`. The name states exactly
+  what the branch supports, which is also what goes in `supported_versions`.
+- **`core` ships nothing.** It is the shared trunk: a full buildable tree pinned to a
+  reference version so its tests actually run. Releases are tagged on version branches.
+- **Merges flow `core` → version, never back.** Merging a version branch into `core` would
+  drag version-specific code into the trunk and poison every other line.
+- Shared fixes land on `core`, then `git merge core` in each worktree. The four invariant
+  files auto-merge every time; `RecipeIndex` and `UnlockHandler` may conflict, which is git
+  correctly pointing at the two files that need per-version thought. If that becomes
+  tedious, `.gitattributes` with `merge=ours` on those paths stops core merges touching
+  them.
+- `ROADMAP.md` is shared — edit on `core` and merge outward.
 
 ---
 
